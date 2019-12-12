@@ -1,0 +1,194 @@
+#!/bin/bash
+#chenz6
+# Zhuoling Chen 
+
+declare -A arr1 			#define array
+declare -A arr2
+
+num_rows=0				#build new of variable array1
+num_columns=0
+num_rows2=0                             #build new of variable array2
+num_columns2=0
+
+#transform matrix to array point $2
+get_file(){			 
+   
+   	num_rows=0
+   	num_columns=0
+
+#using while loop transform
+
+	while read myLine
+	do 
+		num_columns=0
+     		for num in $myLine
+     		do 
+			arr1[$num_rows,$num_columns]=$num
+			((num_columns++))
+		done
+		((num_rows++))
+#stdin
+ 
+	done <"${1:-/dev/stdin}"
+} 
+    
+#transform matrix to array point $3
+get_line(){                           
+       num_rows2=0
+       num_columns2=0
+
+#using while loop
+
+       while read myLine2
+       do
+             num_columns2=0
+             for num in $myLine2
+             do
+                arr2[$num_rows2,$num_columns2]=$num
+                ((num_columns2++))
+             done
+             ((num_rows2++))
+#stdin
+
+       done <"${1:-/dev/stdin}"
+
+}     
+
+#using forloop to go around the code 
+
+add_arr(){                         
+				  
+  sum=0
+  for((i=0;i<$num_rows;i++));do
+        for((j=0;j<$num_columns;j++));do
+        	sum=$(( ${arr1[$i,$j]} + ${arr2[$i,$j]} ))
+           	echo -n "$sum"
+#delete the last tap
+		if [ "$j" -ne "$((num_columns-1))" ]; then
+           		echo -ne "\t"
+		fi
+        done
+      	echo 
+  done
+  
+}
+
+multiply_arr(){
+k=0
+a=0
+
+#using 3 for loop to do multiply
+         for((i=0;i<$num_rows;i++));do
+            	for((j=0;j<$num_columns2;j++));do
+                	 a=0 ; b=0	
+                	for((k=0;k<$num_columns;k++));do
+          			b=$((${arr1[$i,$k]} * ${arr2[$k,$j]}))
+				a=$(( $a + $b ))
+                        done
+			echo -n "$a"
+#delete the last  tap
+                if [ "$j" -ne "$((num_columns2-1))" ]; then
+                        echo -ne "\t"
+                fi
+
+
+ 		done
+ 	      echo -ne "\n"
+    	 done
+                   
+}
+
+if [ "$1" == "dims" ]
+then
+#judgment the argument
+	if (($# >2)) 
+	then
+		echo "wrong" 1>&2
+		exit 1 
+	fi
+
+	if [ ! -r $2 ]
+        then
+                 echo "wrong" 1>&2
+                 exit 1
+         fi
+		get_file $2         
+#type dims 
+         	   echo "$num_rows $num_columns"
+
+    
+    	  elif [ "$1" == "add" ]
+           then 
+# judgement the argument
+              if (($# == 1))
+                then
+                        echo "wrong" 1>&2
+                        exit 1
+                else
+                  get_file $2
+                  get_line $3
+                  add_arr
+                fi
+
+
+       elif [ "$1" == "mean" ]
+         then
+     	       	get_file $2
+
+	    sum=0
+
+#read number by line and add them
+     		 for((j=0;j<$num_columns;j++));do   
+
+       			 for((i=0;i<$num_rows;i++));do
+
+         		  sum=$(( ${arr1[$i,$j]} + $sum ))
+
+      			  done
+
+#divide sum by num_rows 
+          			 avg=0                     	    
+           			 avg=$((($sum + ($num_rows / 2) * ( ($sum>0)*2-1))/$num_rows))
+	   			 echo -ne "$avg"
+           			 sum=0
+           			 if [ "$j" -ne "$((num_columns-1))" ];  
+          		  then
+               			 echo -ne "\t"
+           	 fi
+      			 done
+
+
+          elif [ "$1" == "transpose" ]
+            then
+      
+	       if [ ! -r $2 ]
+                then
+                        echo "wrong" 1>&2
+                        exit 1
+                fi
+  			get_file $2
+#change i and j directly
+		for((i=0;i<$num_columns;i++));do
+			for((j=0;j<$num_rows;j++));do
+           			echo -ne "${arr1[$j,$i]}"
+				if [ "$j" -ne "$((num_rows-1))" ] 
+             			then
+                		echo -ne "\t"
+            			fi
+          		done
+          		echo
+      		done
+
+ 
+  
+            elif [ "$1" == "multiply" ]
+              then
+		  get_file $2
+		  get_line $3
+		  multiply_arr
+#wrong arguement
+
+	   	else
+        	       echo"command wrong!please try again"  1>&2
+               		 exit 1
+  	  fi
